@@ -9,16 +9,17 @@ const styles = {
 };
 
 export class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      username: null
+    };
+  }
   render() {
     return <div style={styles.app}>Welcome to React!</div>;
   }
 
   componentDidMount() {
     const socket = io("http://localhost:3000");
-    // socket.on("FromAPI", data => this.setState({ response: data }));
-  }
-
-  componentWillUnmount() {
-    // socket.disconnect();
   }
 }

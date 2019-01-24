@@ -1,9 +1,10 @@
 var express = require("express");
 var app = express();
 var server = require("http").createServer(app);
-var io = require("socket.io").listen(server);
+var socketIo = require("socket.io");
 var path = require("path");
 
+const io = socketIo(server);
 app.use(express.static(path.join(__dirname)));
 
 users = [];
@@ -17,12 +18,12 @@ app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname + "/static/index.html"))
 );
 
-io.sockets.on("connection", function(socket) {
+io.on("connection", function(socket) {
   connections.push(socket);
   console.log("Connected: %s sockets connected", connections.length);
 
   // Disconnect
-  socket.on("disconnect", function(data) {
+  socket.on("disconnect", function() {
     users.splice(users.indexOf(socket.username), 1);
     updateUsernames();
     connections.splice(connections.indexOf(socket), 1);
@@ -39,13 +40,11 @@ io.sockets.on("connection", function(socket) {
   });
 
   function updateUsernames() {
-    io.sockets.emit("get users", () => {
-      currentUsers = [];
-      users.map(user => {
-        currentUsers.push(user.username);
-      });
-      return currentUsers;
+    currentUsers = [];
+    users.map(user => {
+      currentUsers.push(user.username);
     });
+    io.sockets.emit("get users", currentUsers);
   }
 
   // Send Tutti
