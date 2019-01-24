@@ -5,10 +5,12 @@ var BUILD_DIR = path.resolve(__dirname, 'dist/');
 var APP_DIR = path.resolve(__dirname, 'src');
 
 module.exports = {
+    mode: 'development',
     entry: './src/index.js',
     output: {
         path: BUILD_DIR,
         filename: 'bundle.js',
+        publicPath: "/dist/"
     },
     resolve: {
         extensions: ['.js', '.json']
