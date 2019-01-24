@@ -32,9 +32,10 @@ io.on("connection", function(socket) {
 
   // New user
   socket.on("new user", function(username) {
+    console.log(`New user  ${username}`);
     socket.username = username;
     user = { username: socket.username, play: { emptyEntry } };
-    socket.index = users.length();
+    socket.index = users.length;
     users.push(user);
     updateUsernames();
   });
