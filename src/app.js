@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import io from "socket.io-client";
-import { Register } from "./components/register";
+import { GameSetup } from "./components/game-setup";
 import { GameBoard } from "./components/gameboard";
 
 const styles = {
@@ -15,30 +15,42 @@ export class App extends Component {
     super(props);
     this.state = {
       socket: null,
-      users: [],
-      currentUser: ""
+      users: [], // [ "username1", "username2" ]
+      userMoves: [], // [ { username: socket.username, play: { emptyEntry } } ]
+      currentUser: "",
+      gameStarted: false
     };
   }
 
   render() {
-    console.log(`Users`, this.state.users, this.state.currentUser);
-    console.log(this.state.users.find(user => user.username === this.state.currentUser))
     return (
       <div style={styles.app}>
-        {this.state.users.find(user => user.username === this.state.currentUser) === undefined
-        ? (
-          <Register
+        {!this.state.gameStarted ? (
+          <GameSetup
             reportNewUser={user => {
               console.log(`Nuevo Usuario: ${user}`);
               this.state.socket.emit("new user", user);
               this.setState({ currentUser: user });
             }}
+            reportGameStart={() => {
+              let emptyEntry = { animal: null, object: null, color: null };
+              this.setState({
+                userMoves: this.state.users.map(user => {
+                  return { username: user, play: { ...emptyEntry } };
+                }),
+                gameStarted: true
+              });
+            }}
           />
         ) : (
-            <GameBoard users={this.state.users} user={this.state.currentUser} onChange={change => {
-              this.state.socket.emit("send tutti", change.type, change.content)
-            }}/>
-          )}
+          <GameBoard
+            users={this.state.userMoves}
+            user={this.state.currentUser}
+            onChange={change => {
+              this.state.socket.emit("send tutti", change.type, change.content);
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -47,27 +59,28 @@ export class App extends Component {
   // [..., {username, play: {animal, country, objects} }]
 
   handleNewTutti(data) {
-    console.log('HandleNewTutti: new tutti ', data)
-    const user = this.state.users.find(user => data.username === user.username)
-    const userIndex = this.state.users.findIndex(user => data.username === user.username)
-    user.play[data.type] = data.content
+    console.log("HandleNewTutti: new tutti ", data);
+    let userMoves = [...this.state.userMoves];
+    let user = {
+      ...userMoves.find(user => data.username === user.username)
+    };
+    const userIndex = this.state.userMoves.findIndex(
+      user => data.username === user.username
+    );
+    user.play[data.type] = data.content;
 
-    const newUsers = [...this.state.users]
-    newUsers[userIndex] = user
+    userMoves[userIndex] = user;
     this.setState({
-      users: newUsers
-    })
-
+      userMoves: userMoves
+    });
   }
 
   // {username, animal, country, objects}
-  handleGetUsers(data) {
-    console.log('HandleGetUsers: new users ', data)
-    const newUsers = data.filter(user => this.state.users.findIndex(u => user === u.username) === -1)
-    console.log('NEW USERs', newUsers)
-    this.setState({
-      users: [...this.state.users, ...newUsers.map(user => { return { username: user, play: {} } })]
-    })
+  handleGetUsers(users) {
+    // console.log('HandleGetUsers: new users ', data)
+    // const newUsers = data.filter(user => this.state.users.findIndex(u => user === u.username) === -1)
+    // console.log('NEW USERs', newUsers)
+    this.setState({ users });
   }
 
   componentDidMount() {
@@ -76,13 +89,13 @@ export class App extends Component {
 
     // Socket listeners
     socket.on("get users", data => {
-      this.handleGetUsers(data)
+      this.handleGetUsers(data);
       console.log("users from server: ", data);
     });
 
     socket.on("new tutti", data => {
-      this.handleNewTutti(data)
-    })
+      this.handleNewTutti(data);
+    });
   }
 
   componentWillUnmount() {
