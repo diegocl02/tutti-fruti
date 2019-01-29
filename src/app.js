@@ -16,15 +16,17 @@ export class App extends Component {
     this.state = {
       socket: null,
       users: [],
-      currentUser: null
+      currentUser: ""
     };
   }
 
   render() {
-    console.log(`Users`, this.state.users);
+    console.log(`Users`, this.state.users, this.state.currentUser);
+    console.log(this.state.users.find(user => user.username === this.state.currentUser))
     return (
       <div style={styles.app}>
-        {this.state.users.indexOf(this.state.currentUser) === -1 ? (
+        {this.state.users.find(user => user.username === this.state.currentUser) === undefined
+        ? (
           <Register
             reportNewUser={user => {
               console.log(`Nuevo Usuario: ${user}`);
@@ -33,19 +35,54 @@ export class App extends Component {
             }}
           />
         ) : (
-          <GameBoard users={this.state.users} />
-        )}
+            <GameBoard users={this.state.users} user={this.state.currentUser} onChange={change => {
+              this.state.socket.emit("send tutti", change.type, change.content)
+            }}/>
+          )}
       </div>
     );
   }
 
+  // user
+  // [..., {username, play: {animal, country, objects} }]
+
+  handleNewTutti(data) {
+    console.log('HandleNewTutti: new tutti ', data)
+    const user = this.state.users.find(user => data.username === user.username)
+    const userIndex = this.state.users.findIndex(user => data.username === user.username)
+    user.play[data.type] = data.content
+
+    const newUsers = [...this.state.users]
+    newUsers[userIndex] = user
+    this.setState({
+      users: newUsers
+    })
+
+  }
+
+  // {username, animal, country, objects}
+  handleGetUsers(data) {
+    console.log('HandleGetUsers: new users ', data)
+    const newUsers = data.filter(user => this.state.users.findIndex(u => user === u.username) === -1)
+    console.log('NEW USERs', newUsers)
+    this.setState({
+      users: [...this.state.users, ...newUsers.map(user => { return { username: user, play: {} } })]
+    })
+  }
+
   componentDidMount() {
-    const socket__ = io("http://localhost:3000");
-    this.setState({ socket: socket__ });
-    socket__.on("get users", data => {
-      this.setState({ users: data });
+    const socket = io("http://localhost:3000");
+    this.setState({ socket: socket });
+
+    // Socket listeners
+    socket.on("get users", data => {
+      this.handleGetUsers(data)
       console.log("users from server: ", data);
     });
+
+    socket.on("new tutti", data => {
+      this.handleNewTutti(data)
+    })
   }
 
   componentWillUnmount() {

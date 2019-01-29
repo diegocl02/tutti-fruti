@@ -50,6 +50,7 @@ io.on("connection", function(socket) {
 
   // Send Tutti
   socket.on("send tutti", function(category, content) {
+    console.log("Send tutti", category, content )
     io.sockets.emit("new tutti", {
       username: socket.username,
       type: category,

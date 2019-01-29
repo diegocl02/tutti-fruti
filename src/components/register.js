@@ -9,7 +9,7 @@ export class Register extends Component {
             name: ""
         }
     }
-
+    
     render() {
         return <div className="container">
             <div> Ingresa tu usuario </div>
