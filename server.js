@@ -93,7 +93,7 @@ io.on("connection", function (socket) {
     const randomLetter = possible[Math.floor(Math.random() * possible.length)];
     console.log("Game letter: %s", randomLetter);
     io.sockets.in(socket.gameRoom).emit("game letter", randomLetter)
-    setTimeout(() => io.sockets.in(socket.gameRoom).emit("game over"), 60000);
+    setTimeout(() => io.sockets.in(socket.gameRoom).emit("game over", users), 30000);
   }
 
   // Send Tutti

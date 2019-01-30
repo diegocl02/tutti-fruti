@@ -21,6 +21,7 @@ export class GameBoard extends Component {
     }
 
     render() {
+        console.log('Props on gameboard', this.props)
         const moves = ["animal", "country", "object", "color", "name"]
         const opponents = this.props.users.filter(user => user.username !== this.props.user)
 
@@ -73,7 +74,9 @@ export class GameBoard extends Component {
                                 </div>)
                             }
                             return <div className="column" key={`${index}-${move}`} >
-                                <div className="columns is-vcentered is-hcentered" style={{ justifyContent: "center" }}> {hiddenBlocks.map(block => block)} </div>
+                                <div className="columns is-vcentered is-hcentered" style={{ justifyContent: "center" }}> 
+                                    {typeof user.play[move] === "number" ? hiddenBlocks.map(block => block) :  user.play[move]}
+                                    </div>
                             </div>
                         })}
                     </div>

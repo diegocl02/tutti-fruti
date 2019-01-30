@@ -125,8 +125,9 @@ export class App extends Component {
     this.setState({letter})
   }
 
-  handleGameOver(){
-    this.setState({gameOver: true})
+  handleGameOver(users){
+    console.log('Game over users', users)
+    this.setState({gameOver: true, userMoves: users})
   }
 
   componentDidMount() {
@@ -159,8 +160,8 @@ export class App extends Component {
       this.handleNewLetter(letter)
     })
 
-    socket.on("game over", () => {
-      this.handleGameOver()
+    socket.on("game over", (users) => {
+      this.handleGameOver(users)
     })
   }
 
