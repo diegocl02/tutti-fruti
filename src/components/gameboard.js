@@ -21,20 +21,20 @@ export class GameBoard extends Component {
     }
 
     render() {
-        const moves = ["animal", "country", "object"]
+        const moves = ["animal", "country", "object", "color", "name"]
         const opponents = this.props.users.filter(user => user.username !== this.props.user)
 
         return (
             <section className="section">
                 <div className="content">
                     <p> {this.props.letter ? <span> Words with letter: <b> {this.props.letter} </b> </span> : " Waiting for other players.."} </p>
-                    <button className="button" disabled={this.state.ready} onClick={() => { this.handleReady() }}> {this.state.ready ? "ok" : "Ready"} </button>
+                    <button className="button" disabled={this.state.ready} onClick={() => { this.handleReady() }}> {this.state.ready ? "waiting" : "Ready"} </button>
                 </div>
                 <div className="columns">
                     <div className="column">
                         <p className={"notification is-primary"}> Usuario </p>
                     </div>
-                    {["Animal", "Pais", "Cosa"].map((field) => {
+                    {["Animal", "Pais", "Cosa", "Color", "Nombre"].map((field) => {
                         return <div className="column">
                             <p className={"notification is-secondary"}> {field} </p>
                         </div>
@@ -47,6 +47,7 @@ export class GameBoard extends Component {
                     {moves.map(move => {
                         return <div className="column" key={`${move}-input`}>
                             <input
+                                disabled={this.props.letter === null || this.props.gameOver}
                                 className={"input"}
                                 type="text"
                                 onChange={(e => this.setState({ play: { ...this.state.play, [move]: e.target.value } }))}

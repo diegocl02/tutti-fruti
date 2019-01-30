@@ -21,7 +21,8 @@ export class App extends Component {
       currentUser: "",
       gameStarted: false,
       rooms: [],
-      letter: null 
+      letter: null,
+      gameOver: false 
     };
   }
 
@@ -65,6 +66,7 @@ export class App extends Component {
                 this.state.socket.emit("set ready")
               }}
               letter={this.state.letter}
+              gameOver={this.state.gameOver}
             />
           )}
       </div>
@@ -106,13 +108,13 @@ export class App extends Component {
 
   handleUserJoined(user){
     console.log("User joined", user)
-    let emptyEntry = { animal: null, country: null, object: null }
+    let emptyEntry = { animal: null, country: null, object: null, color: null, name: null }
 
     this.setState({userMoves:[...this.state.userMoves,{ username: user, play: { ...emptyEntry } }]});
   }
 
   handleRoomUsers(roomUsers){
-    let emptyEntry = { animal: null, country: null, object: null }
+    let emptyEntry = { animal: null, country: null, object: null, color: null, name: null }
 
     this.setState({userMoves: [...roomUsers.map(user => {
       return {username: user, play: {...emptyEntry}}
@@ -121,6 +123,10 @@ export class App extends Component {
 
   handleNewLetter(letter){
     this.setState({letter})
+  }
+
+  handleGameOver(){
+    this.setState({gameOver: true})
   }
 
   componentDidMount() {
@@ -151,6 +157,10 @@ export class App extends Component {
 
     socket.on("game letter", letter => {
       this.handleNewLetter(letter)
+    })
+
+    socket.on("game over", () => {
+      this.handleGameOver()
     })
   }
 

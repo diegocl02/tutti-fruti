@@ -19,12 +19,12 @@ app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname + "/static/index.html"))
 );
 
-io.on("connection", function(socket) {
+io.on("connection", function (socket) {
   connections.push(socket);
   console.log("Connected: %s sockets connected", connections.length);
 
   // Disconnect
-  socket.on("disconnect", function() {
+  socket.on("disconnect", function () {
     users.splice(users.indexOf(socket.username), 1);
     updateUsernames();
     connections.splice(connections.indexOf(socket), 1);
@@ -32,7 +32,7 @@ io.on("connection", function(socket) {
   });
 
   // New user
-  socket.on("new user", function(username) {
+  socket.on("new user", function (username) {
     console.log(`New user  ${username}`);
     socket.username = username;
     user = { username: socket.username, play: null };
@@ -52,7 +52,7 @@ io.on("connection", function(socket) {
   }
 
   // Create Game
-  socket.on("create game", function(name) {
+  socket.on("create game", function (name) {
     if (gameRooms.find((room) => room === name) === undefined) gameRooms.push(name);
     socket.join(name);
     socket.gameRoom = name;
@@ -62,7 +62,7 @@ io.on("connection", function(socket) {
   });
 
   // Enter room
-  socket.on("enter room", function(name) {
+  socket.on("enter room", function (name) {
     if (gameRooms.find((room) => room === name)) {
       socket.join(name);
       socket.gameRoom = name;
@@ -77,7 +77,7 @@ io.on("connection", function(socket) {
   });
 
   // Set ready
-  socket.on("set ready", function() {
+  socket.on("set ready", function () {
     socket.ready = true;
     if (allReady(socket.gameRoom)) beginGame(socket.gameRoom);
   });
@@ -93,20 +93,21 @@ io.on("connection", function(socket) {
     const randomLetter = possible[Math.floor(Math.random() * possible.length)];
     console.log("Game letter: %s", randomLetter);
     io.sockets.in(socket.gameRoom).emit("game letter", randomLetter)
+    setTimeout(() => io.sockets.in(socket.gameRoom).emit("game over"), 60000);
   }
 
   // Send Tutti
   // Content can be a string literal or a number. The string will represent the value
   // and the number the lenght of that string in case we don't want to show the user
-  socket.on("send tutti", function(category, content) {
+  socket.on("send tutti", function (category, content) {
     console.log("Send tutti", category, content);
     io.sockets.in(socket.gameRoom).emit("new tutti", {
       username: socket.username,
       type: category,
-    //   content: content,
+      //   content: content,
       content: content === null ? 0 : content.length
     });
-    
-    users[socket.index].play[category] = content;
+
+    if (users[socket.index] !== undefined) users[socket.index].play[category] = content;
   });
 });
