@@ -51,6 +51,7 @@ io.on("connection", function(socket) {
     io.sockets.emit("get users", currentUsers);
   }
 
+<<<<<<< HEAD
   // Create Game
   socket.on("create game", function(name) {
     if (!gameRooms.find(name)) gameRooms.push(name);
@@ -93,13 +94,19 @@ io.on("connection", function(socket) {
   }
 
   // Send Tutti
+=======
+  // Content can be a string literal or a number. The string will represent the value
+  // and the number the lenght of that string in case we don't want to show the user
+>>>>>>> 70eb56a404b283d56207d172ace61e37c4b9a169
   socket.on("send tutti", function(category, content) {
     console.log("Send tutti", category, content);
     io.broadcast.to(socket.gameRoom).emit("new tutti", {
       username: socket.username,
       type: category,
-      content: content
+    //   content: content,
+      content: content === null ? 0 : content.length
     });
+    
     users[socket.index].play[category] = content;
   });
 });
