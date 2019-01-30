@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import io from "socket.io-client";
 import { GameSetup } from "./components/game-setup";
 import { GameBoard } from "./components/gameboard";
+import { RoomsList } from "./components/rooms-list";
 
 const styles = {
   app: {
@@ -18,39 +19,54 @@ export class App extends Component {
       users: [], // [ "username1", "username2" ]
       userMoves: [], // [ { username: socket.username, play: { emptyEntry } } ]
       currentUser: "",
-      gameStarted: false
+      gameStarted: false,
+      rooms: [],
+      letter: null 
     };
   }
 
   render() {
     return (
-      <div style={styles.app}>
+      <div style={styles.app} className={"container"}>
         {!this.state.gameStarted ? (
-          <GameSetup
-            reportNewUser={user => {
-              console.log(`Nuevo Usuario: ${user}`);
-              this.state.socket.emit("new user", user);
-              this.setState({ currentUser: user });
-            }}
-            reportGameStart={() => {
-              let emptyEntry = { animal: null, country: null, object: null };
-              this.setState({
-                userMoves: this.state.users.map(user => {
-                  return { username: user, play: { ...emptyEntry } };
-                }),
-                gameStarted: true
-              });
-            }}
-          />
+          <div className={"container"}>
+            <section className={"section"}>
+              <GameSetup
+                currentUser={this.state.currentUser}
+                reportNewUser={user => {
+                  console.log(`Nuevo Usuario: ${user}`);
+                  this.state.socket.emit("new user", user);
+                  this.setState({ currentUser: user });
+                }}
+                reportGameCreated={() => {
+                  this.state.socket.emit("create game", "room test")
+                  this.setState({
+                    gameStarted: true
+                  });
+                }}
+              />
+            </section>
+
+            { this.state.currentUser!== "" ? <section className={"section"}>
+              <RoomsList rooms={this.state.rooms} reportRoomJoined={(room) => {
+                this.state.socket.emit("enter room", room)
+                this.setState({gameStarted: true})
+              }}/>
+            </section> : null}
+          </div>
         ) : (
-          <GameBoard
-            users={this.state.userMoves}
-            user={this.state.currentUser}
-            onChange={change => {
-              this.state.socket.emit("send tutti", change.type, change.content);
-            }}
-          />
-        )}
+            <GameBoard
+              users={this.state.userMoves}
+              user={this.state.currentUser}
+              onChange={change => {
+                this.state.socket.emit("send tutti", change.type, change.content);
+              }}
+              reportReady={()=> {
+                this.state.socket.emit("set ready")
+              }}
+              letter={this.state.letter}
+            />
+          )}
       </div>
     );
   }
@@ -80,11 +96,35 @@ export class App extends Component {
     // console.log('HandleGetUsers: new users ', data)
     // const newUsers = data.filter(user => this.state.users.findIndex(u => user === u.username) === -1)
     // console.log('NEW USERs', newUsers)
-    this.setState({ users });
+    
+    // this.setState({ users });
+  }
+
+  handleNewRooms(rooms){
+    this.setState({rooms})
+  }
+
+  handleUserJoined(user){
+    console.log("User joined", user)
+    let emptyEntry = { animal: null, country: null, object: null }
+
+    this.setState({userMoves:[...this.state.userMoves,{ username: user, play: { ...emptyEntry } }]});
+  }
+
+  handleRoomUsers(roomUsers){
+    let emptyEntry = { animal: null, country: null, object: null }
+
+    this.setState({userMoves: [...roomUsers.map(user => {
+      return {username: user, play: {...emptyEntry}}
+    })]});
+  }
+
+  handleNewLetter(letter){
+    this.setState({letter})
   }
 
   componentDidMount() {
-    const socket = io("http://localhost:3000");
+    const socket = io("http://192.168.0.74:3000");
     this.setState({ socket: socket });
 
     // Socket listeners
@@ -96,6 +136,22 @@ export class App extends Component {
     socket.on("new tutti", data => {
       this.handleNewTutti(data);
     });
+
+    socket.on("get gamerooms", rooms => {
+      this.handleNewRooms(rooms)
+    })
+
+    socket.on("user joined", user => {
+      this.handleUserJoined(user)
+    })
+
+    socket.on("get room users", roomUsers => {
+      this.handleRoomUsers(roomUsers)
+    })
+
+    socket.on("game letter", letter => {
+      this.handleNewLetter(letter)
+    })
   }
 
   componentWillUnmount() {

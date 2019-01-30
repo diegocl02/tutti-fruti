@@ -10,28 +10,35 @@ export class GameBoard extends Component {
                 animal: null,
                 country: null,
                 object: null
-            }
+            },
+            ready: false
         }
+    }
+
+    handleReady() {
+        this.props.reportReady()
+        this.setState({ ready: true })
     }
 
     render() {
         const moves = ["animal", "country", "object"]
         const opponents = this.props.users.filter(user => user.username !== this.props.user)
+
         return (
-            <div>
+            <section className="section">
+                <div className="content">
+                    <p> {this.props.letter ? <span> Words with letter: <b> {this.props.letter} </b> </span> : " Waiting for other players.."} </p>
+                    <button className="button" disabled={this.state.ready} onClick={() => { this.handleReady() }}> {this.state.ready ? "ok" : "Ready"} </button>
+                </div>
                 <div className="columns">
                     <div className="column">
-                        Usuario
-                </div>
-                    <div className="column">
-                        Animal
-                </div>
-                    <div className="column">
-                        Pais
-                </div>
-                    <div className="column">
-                        Cosa
-                 </div>
+                        <p className={"notification is-primary"}> Usuario </p>
+                    </div>
+                    {["Animal", "Pais", "Cosa"].map((field) => {
+                        return <div className="column">
+                            <p className={"notification is-secondary"}> {field} </p>
+                        </div>
+                    })}
                 </div>
                 <div className="columns">
                     <div className="column" key={`col-input`} >
@@ -40,6 +47,7 @@ export class GameBoard extends Component {
                     {moves.map(move => {
                         return <div className="column" key={`${move}-input`}>
                             <input
+                                className={"input"}
                                 type="text"
                                 onChange={(e => this.setState({ play: { ...this.state.play, [move]: e.target.value } }))}
                                 onBlur={(e) => this.props.onChange({ type: move, content: this.state.play[move] })}
@@ -69,7 +77,7 @@ export class GameBoard extends Component {
                         })}
                     </div>
                 })}
-            </div>
+            </section>
         );
     }
 }
