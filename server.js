@@ -8,8 +8,9 @@ const io = socketIo(server);
 app.use(express.static(path.join(__dirname)));
 
 users = [];
+gameRooms = [];
 connections = [];
-emptyEntry = { animal: null, object: null, color: null };
+emptyEntry = { animal: null, country: null, object: null };
 
 server.listen(process.env.PORT || 3000);
 console.log("Server running on port 3000...");
@@ -34,10 +35,12 @@ io.on("connection", function(socket) {
   socket.on("new user", function(username) {
     console.log(`New user  ${username}`);
     socket.username = username;
-    user = { username: socket.username, play: { emptyEntry } };
+    user = { username: socket.username, play: null };
     socket.index = users.length;
     users.push(user);
     updateUsernames();
+    // send gameroom list to just this socket
+    io.broadcast.to(socket.id).emit("get gamerooms", gameRooms);
   });
 
   function updateUsernames() {
@@ -48,10 +51,51 @@ io.on("connection", function(socket) {
     io.sockets.emit("get users", currentUsers);
   }
 
+  // Create Game
+  socket.on("create game", function(name) {
+    if (!gameRooms.find(name)) gameRooms.push(name);
+    socket.join(name);
+    socket.gameRoom = name;
+    users[socket.index].play = { ...emptyEntry };
+    console.log("Room created", name);
+    io.sockets.emit("get gamerooms", gameRooms);
+  });
+
+  // Enter room
+  socket.on("enter room", function(name) {
+    if (gameRooms.find(name)) {
+      socket.join(name);
+      socket.gameRoom = name;
+      users[socket.index].play = { ...emptyEntry };
+      console.log("A user entered room %s", name);
+    }
+  });
+
+  // Set ready
+  socket.on("set ready", function() {
+    socket.ready = true;
+    if (allReady(socket.gameRoom)) beginGame(socket.gameRoom);
+  });
+
+  function allReady(room) {
+    connections.map(socket => {
+      if (socket.gameRoom == room && !socket.ready) return false;
+    });
+    return true;
+  }
+
+  function beginGame(room) {
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    randomLetter = () =>
+      possible.charAt(Math.floor(Math.random() * possible.length));
+    console.log("Game letter: %s", randomLetter);
+    io.broadcast.to(socket.gameRoom).emit("game letter", randomLetter);
+  }
+
   // Send Tutti
   socket.on("send tutti", function(category, content) {
     console.log("Send tutti", category, content);
-    io.sockets.emit("new tutti", {
+    io.broadcast.to(socket.gameRoom).emit("new tutti", {
       username: socket.username,
       type: category,
       content: content
