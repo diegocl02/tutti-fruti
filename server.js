@@ -48,14 +48,17 @@ io.on("connection", function(socket) {
     io.sockets.emit("get users", currentUsers);
   }
 
-  // Send Tutti
+  // Content can be a string literal or a number. The string will represent the value
+  // and the number the lenght of that string in case we don't want to show the user
   socket.on("send tutti", function(category, content) {
     console.log("Send tutti", category, content);
     io.sockets.emit("new tutti", {
       username: socket.username,
       type: category,
-      content: content
+    //   content: content,
+      content: content === null ? 0 : content.length
     });
+    
     users[socket.index].play[category] = content;
   });
 });

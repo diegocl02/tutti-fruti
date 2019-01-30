@@ -33,7 +33,7 @@ export class App extends Component {
               this.setState({ currentUser: user });
             }}
             reportGameStart={() => {
-              let emptyEntry = { animal: null, object: null, color: null };
+              let emptyEntry = { animal: null, country: null, object: null };
               this.setState({
                 userMoves: this.state.users.map(user => {
                   return { username: user, play: { ...emptyEntry } };
